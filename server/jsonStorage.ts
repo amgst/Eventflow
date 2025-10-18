@@ -15,7 +15,9 @@ export class JsonStorage implements IStorage {
     this.dataDir = path.resolve(import.meta.dirname, "data");
     this.eventsFile = path.resolve(this.dataDir, "events.json");
     this.rsvpsFile = path.resolve(this.dataDir, "rsvps.json");
-    this.ensureDataDir();
+    if (!process.env.VERCEL) {
+      this.ensureDataDir();
+    }
     this.initializeFromDiskOrSeed();
   }
 
@@ -33,7 +35,9 @@ export class JsonStorage implements IStorage {
       this.loadFromDisk();
     } else {
       this.seedInitialData();
-      this.saveToDisk();
+      if (!process.env.VERCEL) {
+        this.saveToDisk();
+      }
     }
   }
 
@@ -48,11 +52,14 @@ export class JsonStorage implements IStorage {
     } catch (e) {
       // If parsing fails, fall back to seed to keep app usable
       this.seedInitialData();
-      this.saveToDisk();
+      if (!process.env.VERCEL) {
+        this.saveToDisk();
+      }
     }
   }
 
   private saveToDisk() {
+    if (process.env.VERCEL) return;
     const eventsArr = Array.from(this.events.values());
     const rsvpsArr = Array.from(this.rsvps.values());
     fs.writeFileSync(this.eventsFile, JSON.stringify(eventsArr, null, 2), "utf-8");

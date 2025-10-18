@@ -1,18 +1,19 @@
 import express from "express";
 import session from "express-session";
 import path from "path";
-import registerRoutes from "../server/routes";
-import MemoryStore from "memorystore"(session);
+import { registerRoutes } from "../server/routes";
+import connectMemorystore from "memorystore";
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files from Vite build
+// Static files from Vite build (not strictly needed for API function)
 app.use(express.static(path.join(process.cwd(), "dist", "public")));
 
 // Basic session for demo (not durable in serverless)
+const Memorystore = connectMemorystore(session);
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "change-this-secret",
@@ -23,7 +24,7 @@ app.use(
       secure: true,
       sameSite: "lax",
     },
-    store: new MemoryStore({ checkPeriod: 86400000 }),
+    store: new Memorystore({ checkPeriod: 86400000 }),
   })
 );
 

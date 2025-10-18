@@ -1,12 +1,17 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "server/data/*.json"
+    }
+  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.ts" },
     { "source": "/((?!api).*)", "destination": "/index.html" }
   ],
   "env": {
-    "DATA_SOURCE": "memory",
+    "DATA_SOURCE": "json",
     "SESSION_SECRET": "change-this-secret"
   }
 }
