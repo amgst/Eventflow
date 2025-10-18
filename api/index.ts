@@ -1,35 +1,41 @@
 import express from "express";
 import session from "express-session";
-import connectMemorystore from "memorystore";
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { registerRoutes } from "../server/routes";
+import path from "path";
+import registerRoutes from "../server/routes";
+import MemoryStore from "memorystore"(session);
 
-// Initialize Express app once per function instance
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-const Memorystore = connectMemorystore(session);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Static files from Vite build
+app.use(express.static(path.join(process.cwd(), "dist", "public")));
+
+// Basic session for demo (not durable in serverless)
 app.use(
   session({
-    store: new Memorystore({ checkPeriod: 86400000 }),
-    secret: process.env.SESSION_SECRET || "prod-secret",
+    secret: process.env.SESSION_SECRET || "change-this-secret",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 14 * 24 * 60 * 60 * 1000 },
+    cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+    },
+    store: new MemoryStore({ checkPeriod: 86400000 }),
   })
 );
 
-// Register routes (reuses the same route definitions as local dev)
-await registerRoutes(app);
+let initialized = false;
+async function ensureInitialized() {
+  if (!initialized) {
+    await registerRoutes(app);
+    initialized = true;
+  }
+}
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Delegate request handling to Express
-  return app(req as any, res as any);
+export default async function handler(req: any, res: any) {
+  await ensureInitialized();
+  return app(req, res);
 }
