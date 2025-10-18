@@ -87,10 +87,12 @@ export default function Home() {
                 ))}
               </SelectContent>
             </Select>
-            <Button size="lg" className="h-12 px-8 gap-2" data-testid="button-browse-events">
-              Browse Events
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            <Link href="/events">
+              <Button size="lg" className="h-12 px-8 gap-2" data-testid="button-browse-events">
+                Browse Events
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

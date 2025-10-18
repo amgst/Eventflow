@@ -1,0 +1,38 @@
+[
+  {
+    "id": "cb1c3835-7829-4d71-a99e-9bfd7fdba323",
+    "eventId": "90f87010-4381-4eea-a877-6000af8fc255",
+    "attendeeName": "Alice Johnson",
+    "attendeeEmail": "alice@example.com"
+  },
+  {
+    "id": "0685f957-ae23-4a55-8ce8-dd92074d5c7b",
+    "eventId": "90f87010-4381-4eea-a877-6000af8fc255",
+    "attendeeName": "Bob Smith",
+    "attendeeEmail": "bob@example.com"
+  },
+  {
+    "id": "026a8927-b13c-4d32-b117-a82cb42df4f2",
+    "eventId": "90f87010-4381-4eea-a877-6000af8fc255",
+    "attendeeName": "Carol White",
+    "attendeeEmail": "carol@example.com"
+  },
+  {
+    "id": "f3fdb35d-bcb1-4f0e-839d-27024a182345",
+    "eventId": "7350e8d6-4c29-4119-b718-54553e1d1dc1",
+    "attendeeName": "David Brown",
+    "attendeeEmail": "david@example.com"
+  },
+  {
+    "id": "12ce0a26-dc6f-463e-bfd2-09824dc36fdf",
+    "eventId": "7350e8d6-4c29-4119-b718-54553e1d1dc1",
+    "attendeeName": "Emma Davis",
+    "attendeeEmail": "emma@example.com"
+  },
+  {
+    "id": "ca0a8149-a4b5-418b-98f7-92783da0d91b",
+    "eventId": "1540b0e4-b884-4300-bd29-1ad5d286c0e6",
+    "attendeeName": "Frank Miller",
+    "attendeeEmail": "frank@example.com"
+  }
+]

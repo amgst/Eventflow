@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Calendar, MapPin, Users, Share2, Mail, User, ArrowLeft } from "lucide-react";
@@ -17,8 +17,9 @@ import type { Event, InsertRsvp, Rsvp } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function EventDetail() {
+  const [matchWithSlug, paramsWithSlug] = useRoute("/events/:id/:slug");
   const [, params] = useRoute("/events/:id");
-  const eventId = params?.id;
+  const eventId = matchWithSlug ? paramsWithSlug?.id : params?.id;
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -35,6 +36,12 @@ export default function EventDetail() {
     },
     enabled: !!eventId,
   });
+
+  useEffect(() => {
+    if (event?.title) {
+      document.title = `${event.title} – EventHub`;
+    }
+  }, [event?.title]);
 
   const { data: allEvents } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -248,47 +255,50 @@ export default function EventDetail() {
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="name"
-                            placeholder="John Doe"
-                            value={formData.attendeeName}
-                            onChange={(e) => setFormData({ ...formData, attendeeName: e.target.value })}
-                            className="pl-10"
-                            required
-                            data-testid="input-attendee-name"
-                          />
-                        </div>
+                        <Label htmlFor="attendeeName">Your Name</Label>
+                        <Input
+                          id="attendeeName"
+                          value={formData.attendeeName}
+                          onChange={(e) => setFormData({ ...formData, attendeeName: e.target.value })}
+                          placeholder="John Doe"
+                          required
+                        />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            type="email"
-                            placeholder="john@example.com"
-                            value={formData.attendeeEmail}
-                            onChange={(e) => setFormData({ ...formData, attendeeEmail: e.target.value })}
-                            className="pl-10"
-                            required
-                            data-testid="input-attendee-email"
-                          />
-                        </div>
+                        <Label htmlFor="attendeeEmail">Email Address</Label>
+                        <Input
+                          id="attendeeEmail"
+                          type="email"
+                          value={formData.attendeeEmail}
+                          onChange={(e) => setFormData({ ...formData, attendeeEmail: e.target.value })}
+                          placeholder="john@example.com"
+                          required
+                        />
                       </div>
-                      <Button type="submit" className="w-full" disabled={rsvpMutation.isPending} data-testid="button-submit-rsvp">
-                        {rsvpMutation.isPending ? "Submitting..." : "Confirm Registration"}
+                      <Button type="submit" className="w-full" disabled={rsvpMutation.isPending}>
+                        {rsvpMutation.isPending ? "Submitting..." : "Confirm RSVP"}
                       </Button>
                     </form>
                   </DialogContent>
                 </Dialog>
 
-                <Button variant="outline" className="w-full gap-2" data-testid="button-share">
-                  <Share2 className="h-4 w-4" />
-                  Share Event
-                </Button>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">Share this event</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="gap-2">
+                      <Share2 className="h-4 w-4" />
+                      Copy Link
+                    </Button>
+                    <Button variant="outline" className="gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </Button>
+                    <Button variant="outline" className="gap-2">
+                      <User className="h-4 w-4" />
+                      Invite
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

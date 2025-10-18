@@ -9,9 +9,18 @@ interface EventCardProps {
   rsvpCount?: number;
 }
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function EventCard({ event, rsvpCount = 0 }: EventCardProps) {
+  const slug = slugify(event.title);
   return (
-    <Link href={`/events/${event.id}`}>
+    <Link href={`/events/${event.id}/${slug}`}>
       <div className="group relative overflow-hidden rounded-xl bg-card border border-card-border hover-elevate active-elevate-2 transition-all duration-300 cursor-pointer" data-testid={`card-event-${event.id}`}>
         <div className="aspect-[4/3] relative overflow-hidden">
           <img

@@ -1,23 +1,151 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Calendar, Users, Eye, TrendingUp, Plus, Edit, Trash2, MoreVertical } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Calendar, Users, Eye, TrendingUp, Plus, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import type { Event, Rsvp } from "@shared/schema";
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export default function Dashboard() {
+  const { toast } = useToast();
+
+  // Session check
+  const { data: me } = useQuery<{ username: string } | null>({
+    queryKey: ["/api/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false)
+  const [saveCreds, setSaveCreds] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("auth.savedCreds")
+      if (raw) {
+        const { username: u = "", password: p = "", save = true } = JSON.parse(raw)
+        setUsername(u)
+        setPassword(p)
+        setSaveCreds(!!save)
+      }
+      const rm = localStorage.getItem("auth.rememberMe")
+      if (rm) setRememberMe(rm === "true")
+    } catch {}
+  }, [])
+
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/login", { username, password, remember: rememberMe })
+    },
+    onSuccess: async () => {
+      if (saveCreds) {
+        localStorage.setItem(
+          "auth.savedCreds",
+          JSON.stringify({ username, password, save: true })
+        )
+      } else {
+        localStorage.removeItem("auth.savedCreds")
+      }
+      localStorage.setItem("auth.rememberMe", String(rememberMe))
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/me"] })
+      toast({ title: "Logged in", description: "Access granted to dashboard" })
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Login failed",
+        description: String(err?.message || "Invalid credentials"),
+        variant: "destructive",
+      })
+    },
+  })
+
+  // Ensure hooks are called unconditionally; gate queries with `enabled`
   const { data: events, isLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
+    enabled: !!me,
   });
 
   const { data: rsvps } = useQuery<Rsvp[]>({
     queryKey: ["/api/rsvps"],
+    enabled: !!me,
   });
+
+  if (!me) {
+    return (
+      <div className="min-h-screen bg-background py-12">
+        <div className="max-w-md mx-auto px-4 md:px-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Organizer Login</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="admin"
+                    autoComplete="username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="secret123"
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Checkbox id="remember" checked={rememberMe} onCheckedChange={(v) => setRememberMe(!!v)} />
+                  <Label htmlFor="remember">Keep me signed in</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="savecreds" checked={saveCreds} onCheckedChange={(v) => setSaveCreds(!!v)} />
+                  <Label htmlFor="savecreds">Save username & password on this device</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">Warning: saving password stores it locally and is not recommended on shared devices.</p>
+
+                <Button
+                  className="w-full"
+                  onClick={() => loginMutation.mutate()}
+                  disabled={loginMutation.isPending}
+                  data-testid="button-login"
+                >
+                  {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   const getRsvpCount = (eventId: string) => {
     return rsvps?.filter(r => r.eventId === eventId).length || 0;
@@ -102,11 +230,12 @@ export default function Dashboard() {
                       const rsvpCount = getRsvpCount(event.id);
                       const spotsLeft = event.capacity - rsvpCount;
                       const fillPercentage = Math.round((rsvpCount / event.capacity) * 100);
+                      const slug = slugify(event.title);
 
                       return (
                         <TableRow key={event.id} data-testid={`row-event-${event.id}`}>
                           <TableCell className="font-medium">
-                            <Link href={`/events/${event.id}`}>
+                            <Link href={`/events/${event.id}/${slug}`}>
                               <span className="hover:text-primary cursor-pointer" data-testid={`text-event-title-${event.id}`}>
                                 {event.title}
                               </span>
@@ -155,7 +284,7 @@ export default function Dashboard() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <Link href={`/events/${event.id}`}>
+                                <Link href={`/events/${event.id}/${slug}`}>
                                   <DropdownMenuItem className="cursor-pointer">
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Details

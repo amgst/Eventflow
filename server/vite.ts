@@ -40,6 +40,12 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  // Serve generated images from the attached_assets folder in dev
+  const devImagesPath = path.resolve(import.meta.dirname, "..", "attached_assets", "generated_images");
+  if (fs.existsSync(devImagesPath)) {
+    app.use("/generated_images", express.static(devImagesPath));
+  }
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
@@ -77,6 +83,12 @@ export function serveStatic(app: Express) {
   }
 
   app.use(express.static(distPath));
+
+  // Serve generated images from attached_assets in production as well
+  const prodImagesPath = path.resolve(import.meta.dirname, "..", "attached_assets", "generated_images");
+  if (fs.existsSync(prodImagesPath)) {
+    app.use("/generated_images", express.static(prodImagesPath));
+  }
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {

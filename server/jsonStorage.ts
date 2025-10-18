@@ -1,26 +1,62 @@
-import { type Event, type InsertEvent, type Rsvp, type InsertRsvp } from "@shared/schema";
+import fs from "fs";
+import path from "path";
 import { randomUUID } from "crypto";
-import { JsonStorage } from "./jsonStorage";
+import type { IStorage } from "./storage";
+import { type Event, type InsertEvent, type Rsvp, type InsertRsvp } from "@shared/schema";
 
-export interface IStorage {
-  getAllEvents(): Promise<Event[]>;
-  getEvent(id: string): Promise<Event | undefined>;
-  createEvent(event: InsertEvent): Promise<Event>;
-  deleteEvent(id: string): Promise<boolean>;
-  
-  getAllRsvps(): Promise<Rsvp[]>;
-  getRsvpsByEvent(eventId: string): Promise<Rsvp[]>;
-  createRsvp(rsvp: InsertRsvp): Promise<Rsvp>;
-}
-
-export class MemStorage implements IStorage {
-  private events: Map<string, Event>;
-  private rsvps: Map<string, Rsvp>;
+export class JsonStorage implements IStorage {
+  private events: Map<string, Event> = new Map();
+  private rsvps: Map<string, Rsvp> = new Map();
+  private dataDir: string;
+  private eventsFile: string;
+  private rsvpsFile: string;
 
   constructor() {
-    this.events = new Map();
-    this.rsvps = new Map();
-    this.seedInitialData();
+    this.dataDir = path.resolve(import.meta.dirname, "data");
+    this.eventsFile = path.resolve(this.dataDir, "events.json");
+    this.rsvpsFile = path.resolve(this.dataDir, "rsvps.json");
+    this.ensureDataDir();
+    this.initializeFromDiskOrSeed();
+  }
+
+  private ensureDataDir() {
+    if (!fs.existsSync(this.dataDir)) {
+      fs.mkdirSync(this.dataDir, { recursive: true });
+    }
+  }
+
+  private initializeFromDiskOrSeed() {
+    const hasEvents = fs.existsSync(this.eventsFile);
+    const hasRsvps = fs.existsSync(this.rsvpsFile);
+
+    if (hasEvents && hasRsvps) {
+      this.loadFromDisk();
+    } else {
+      this.seedInitialData();
+      this.saveToDisk();
+    }
+  }
+
+  private loadFromDisk() {
+    try {
+      const eventsJson = fs.readFileSync(this.eventsFile, "utf-8");
+      const rsvpsJson = fs.readFileSync(this.rsvpsFile, "utf-8");
+      const eventsArr: Event[] = JSON.parse(eventsJson || "[]");
+      const rsvpsArr: Rsvp[] = JSON.parse(rsvpsJson || "[]");
+      this.events = new Map(eventsArr.map(e => [e.id, e]));
+      this.rsvps = new Map(rsvpsArr.map(r => [r.id, r]));
+    } catch (e) {
+      // If parsing fails, fall back to seed to keep app usable
+      this.seedInitialData();
+      this.saveToDisk();
+    }
+  }
+
+  private saveToDisk() {
+    const eventsArr = Array.from(this.events.values());
+    const rsvpsArr = Array.from(this.rsvps.values());
+    fs.writeFileSync(this.eventsFile, JSON.stringify(eventsArr, null, 2), "utf-8");
+    fs.writeFileSync(this.rsvpsFile, JSON.stringify(rsvpsArr, null, 2), "utf-8");
   }
 
   private seedInitialData() {
@@ -105,9 +141,7 @@ export class MemStorage implements IStorage {
       },
     ];
 
-    sampleEvents.forEach(event => {
-      this.events.set(event.id, event);
-    });
+    this.events = new Map(sampleEvents.map(e => [e.id, e]));
 
     const sampleRsvps: Rsvp[] = [
       { id: randomUUID(), eventId: sampleEvents[0].id, attendeeName: "Alice Johnson", attendeeEmail: "alice@example.com" },
@@ -118,13 +152,11 @@ export class MemStorage implements IStorage {
       { id: randomUUID(), eventId: sampleEvents[2].id, attendeeName: "Frank Miller", attendeeEmail: "frank@example.com" },
     ];
 
-    sampleRsvps.forEach(rsvp => {
-      this.rsvps.set(rsvp.id, rsvp);
-    });
+    this.rsvps = new Map(sampleRsvps.map(r => [r.id, r]));
   }
 
   async getAllEvents(): Promise<Event[]> {
-    return Array.from(this.events.values()).sort((a, b) => 
+    return Array.from(this.events.values()).sort((a, b) =>
       new Date(a.date).getTime() - new Date(b.date).getTime()
     );
   }
@@ -137,11 +169,14 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const event: Event = { ...insertEvent, id };
     this.events.set(id, event);
+    this.saveToDisk();
     return event;
   }
 
   async deleteEvent(id: string): Promise<boolean> {
-    return this.events.delete(id);
+    const deleted = this.events.delete(id);
+    if (deleted) this.saveToDisk();
+    return deleted;
   }
 
   async getAllRsvps(): Promise<Rsvp[]> {
@@ -149,19 +184,14 @@ export class MemStorage implements IStorage {
   }
 
   async getRsvpsByEvent(eventId: string): Promise<Rsvp[]> {
-    return Array.from(this.rsvps.values()).filter(
-      (rsvp) => rsvp.eventId === eventId
-    );
+    return Array.from(this.rsvps.values()).filter(r => r.eventId === eventId);
   }
 
   async createRsvp(insertRsvp: InsertRsvp): Promise<Rsvp> {
     const id = randomUUID();
     const rsvp: Rsvp = { ...insertRsvp, id };
     this.rsvps.set(id, rsvp);
+    this.saveToDisk();
     return rsvp;
   }
 }
-
-export const storage: IStorage = (process.env.DATA_SOURCE?.toLowerCase() === "json")
-  ? new JsonStorage()
-  : new MemStorage();

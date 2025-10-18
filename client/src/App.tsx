@@ -10,11 +10,14 @@ import EventDetail from "@/pages/event-detail";
 import CreateEvent from "@/pages/create-event";
 import Dashboard from "@/pages/dashboard";
 import NotFound from "@/pages/not-found";
+import EventsList from "@/pages/events";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/events" component={EventsList} />
+      <Route path="/events/:id/:slug" component={EventDetail} />
       <Route path="/events/:id" component={EventDetail} />
       <Route path="/create" component={CreateEvent} />
       <Route path="/dashboard" component={Dashboard} />

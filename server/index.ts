@@ -1,10 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import session from "express-session";
+import connectMemorystore from "memorystore";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+const Memorystore = connectMemorystore(session);
+app.use(session({
+  store: new Memorystore({ checkPeriod: 86400000 }),
+  secret: process.env.SESSION_SECRET || "dev-secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 14 * 24 * 60 * 60 * 1000 }
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -64,7 +74,7 @@ app.use((req, res, next) => {
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
+    // reusePort is not supported on Windows; remove to avoid ENOTSUP
   }, () => {
     log(`serving on port ${port}`);
   });
