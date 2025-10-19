@@ -1,4 +1,4 @@
-import { type Event, type InsertEvent, type Rsvp, type InsertRsvp } from "@shared/schema";
+import { type Event, type InsertEvent, type Rsvp, type InsertRsvp } from "../shared/schema";
 import { randomUUID } from "crypto";
 import { JsonStorage } from "./jsonStorage";
 

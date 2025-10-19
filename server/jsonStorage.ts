@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import type { IStorage } from "./storage";
-import { type Event, type InsertEvent, type Rsvp, type InsertRsvp } from "@shared/schema";
+import { type Event, type InsertEvent, type Rsvp, type InsertRsvp } from "../shared/schema";
 
 export class JsonStorage implements IStorage {
   private events: Map<string, Event> = new Map();
@@ -12,9 +12,12 @@ export class JsonStorage implements IStorage {
   private rsvpsFile: string;
 
   constructor() {
-    this.dataDir = path.resolve(import.meta.dirname, "data");
-    this.eventsFile = path.resolve(this.dataDir, "events.json");
-    this.rsvpsFile = path.resolve(this.dataDir, "rsvps.json");
+    const baseDir = process.env.VERCEL
+      ? path.resolve(process.cwd(), "server", "data")
+      : path.resolve(import.meta.dirname, "data");
+    this.dataDir = baseDir;
+    this.eventsFile = path.join(this.dataDir, "events.json");
+    this.rsvpsFile = path.join(this.dataDir, "rsvps.json");
     if (!process.env.VERCEL) {
       this.ensureDataDir();
     }
