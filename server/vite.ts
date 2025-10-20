@@ -5,8 +5,10 @@ import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
 import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+import { fileURLToPath } from "url";
 
 const viteLogger = createLogger();
+const metaDir = fileURLToPath(new URL(".", import.meta.url));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -41,7 +43,7 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   // Serve generated images from the attached_assets folder in dev
-  const devImagesPath = path.resolve(import.meta.dirname, "..", "attached_assets", "generated_images");
+  const devImagesPath = path.resolve(metaDir, "..", "attached_assets", "generated_images");
   if (fs.existsSync(devImagesPath)) {
     app.use("/generated_images", express.static(devImagesPath));
   }
@@ -52,7 +54,7 @@ export async function setupVite(app: Express, server: Server) {
 
     try {
       const clientTemplate = path.resolve(
-        import.meta.dirname,
+        metaDir,
         "..",
         "client",
         "index.html",
@@ -74,7 +76,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(metaDir, "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(
@@ -85,7 +87,7 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // Serve generated images from attached_assets in production as well
-  const prodImagesPath = path.resolve(import.meta.dirname, "..", "attached_assets", "generated_images");
+  const prodImagesPath = path.resolve(metaDir, "..", "attached_assets", "generated_images");
   if (fs.existsSync(prodImagesPath)) {
     app.use("/generated_images", express.static(prodImagesPath));
   }
