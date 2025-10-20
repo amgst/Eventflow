@@ -235,7 +235,7 @@ export default function Dashboard() {
                       return (
                         <TableRow key={event.id} data-testid={`row-event-${event.id}`}>
                           <TableCell className="font-medium">
-                            <Link href={`/events/${event.id}/${slug}`}>
+                            <Link href={`/events/${slug}`}>
                               <span className="hover:text-primary cursor-pointer" data-testid={`text-event-title-${event.id}`}>
                                 {event.title}
                               </span>
@@ -284,7 +284,7 @@ export default function Dashboard() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <Link href={`/events/${event.id}/${slug}`}>
+                                <Link href={`/events/${slug}`}>
                                   <DropdownMenuItem className="cursor-pointer">
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Details

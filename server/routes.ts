@@ -3,6 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertEventSchema, insertRsvpSchema } from "../shared/schema";
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth endpoints
   app.post("/api/login", async (req, res) => {
@@ -51,6 +59,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(events);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch events" });
+    }
+  });
+
+  // New: fetch event by slug
+  app.get("/api/events/slug/:slug", async (req, res) => {
+    try {
+      const all = await storage.getAllEvents();
+      const target = (req.params.slug || "").toLowerCase();
+      const found = all.find(e => slugify(e.title) === target);
+      if (!found) return res.status(404).json({ error: "Event not found" });
+      res.json(found);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch event" });
     }
   });
 

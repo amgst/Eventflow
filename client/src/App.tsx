@@ -17,8 +17,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/events" component={EventsList} />
-      <Route path="/events/:id/:slug" component={EventDetail} />
-      <Route path="/events/:id" component={EventDetail} />
+      <Route path="/events/:slug" component={EventDetail} />
       <Route path="/create" component={CreateEvent} />
       <Route path="/dashboard" component={Dashboard} />
       <Route component={NotFound} />

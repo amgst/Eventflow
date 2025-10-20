@@ -52,12 +52,25 @@ function seedFromJson() {
   rsvpsMap = new Map(rsvpsArr.map(r => [r.id, r]));
 }
 
+function slugify(text) {
+  return String(text || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function getAllEvents() {
   return Array.from(eventsMap.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 function getEvent(id) {
   return eventsMap.get(id);
+}
+
+function getEventBySlug(slug) {
+  const target = String(slug || "").toLowerCase();
+  return Array.from(eventsMap.values()).find(e => slugify(e.title) === target);
 }
 
 function createEvent(insertEvent) {
@@ -138,6 +151,17 @@ async function ensureInitialized() {
         res.json(events);
       } catch (_) {
         res.status(500).json({ error: "Failed to fetch events" });
+      }
+    });
+
+    // New: fetch event by slug
+    app.get("/api/events/slug/:slug", async (req, res) => {
+      try {
+        const event = getEventBySlug(req.params.slug);
+        if (!event) return res.status(404).json({ error: "Event not found" });
+        res.json(event);
+      } catch (_) {
+        res.status(500).json({ error: "Failed to fetch event" });
       }
     });
 

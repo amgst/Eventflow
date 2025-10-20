@@ -17,9 +17,8 @@ import type { Event, InsertRsvp, Rsvp } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function EventDetail() {
-  const [matchWithSlug, paramsWithSlug] = useRoute("/events/:id/:slug");
-  const [, params] = useRoute("/events/:id");
-  const eventId = matchWithSlug ? paramsWithSlug?.id : params?.id;
+  const [, params] = useRoute("/events/:slug");
+  const slug = params?.slug;
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,13 +27,13 @@ export default function EventDetail() {
   });
 
   const { data: event, isLoading } = useQuery<Event>({
-    queryKey: ["/api/events", eventId],
+    queryKey: ["/api/events/slug", slug],
     queryFn: async () => {
-      const response = await fetch(`/api/events/${eventId}`);
+      const response = await fetch(`/api/events/slug/${slug}`);
       if (!response.ok) throw new Error("Failed to fetch event");
       return response.json();
     },
-    enabled: !!eventId,
+    enabled: !!slug,
   });
 
   useEffect(() => {
@@ -51,8 +50,8 @@ export default function EventDetail() {
     queryKey: ["/api/rsvps"],
   });
 
-  const rsvpCount = rsvps?.filter(r => r.eventId === eventId).length || 0;
-  const similarEvents = allEvents?.filter(e => e.id !== eventId && e.category === event?.category).slice(0, 3) || [];
+  const rsvpCount = rsvps?.filter(r => r.eventId === event?.id).length || 0;
+  const similarEvents = allEvents?.filter(e => e.id !== event?.id && e.category === event?.category).slice(0, 3) || [];
 
   const rsvpMutation = useMutation({
     mutationFn: async (data: InsertRsvp) => {
@@ -78,9 +77,9 @@ export default function EventDetail() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (eventId && formData.attendeeName && formData.attendeeEmail) {
+    if (event?.id && formData.attendeeName && formData.attendeeEmail) {
       rsvpMutation.mutate({
-        eventId,
+        eventId: event.id,
         attendeeName: formData.attendeeName,
         attendeeEmail: formData.attendeeEmail,
       });
