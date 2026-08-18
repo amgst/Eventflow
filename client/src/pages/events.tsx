@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link, useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/event-card";
 import {
@@ -15,13 +15,7 @@ import type { Event, Rsvp, Category } from "@shared/schema";
 import { categories as allCategories } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function parseParamsFromLocationString(locationString?: string) {
-  let search = "";
-  if (locationString && locationString.includes("?")) {
-    search = locationString.slice(locationString.indexOf("?"));
-  } else if (typeof window !== "undefined") {
-    search = window.location.search;
-  }
+function parseParamsFromSearchString(search: string) {
   const params = new URLSearchParams(search || "");
   const categoryParam = params.get("category") || "all";
   const pageParam = Math.max(1, parseInt(params.get("page") || "1", 10) || 1);
@@ -37,8 +31,8 @@ function buildHref(category: string, page: number) {
 }
 
 export default function EventsList() {
-  const [location] = useLocation();
-  const { category: categoryParam, page: currentPage } = useMemo(() => parseParamsFromLocationString(location), [location]);
+  const search = useSearch();
+  const { category: categoryParam, page: currentPage } = useMemo(() => parseParamsFromSearchString(search), [search]);
 
   const categories: ("all" | Category)[] = ["all", ...allCategories];
   const normalized = (categoryParam || "all").toLowerCase();

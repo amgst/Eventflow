@@ -40,7 +40,11 @@ export default function CreateEvent() {
   const form = useForm<InsertEvent>({
     resolver: zodResolver(insertEventSchema.extend({
       date: insertEventSchema.shape.date.refine(
-        (date) => new Date(date) >= new Date(new Date().setHours(0, 0, 0, 0)),
+        (date) => {
+          const today = new Date();
+          const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+          return date >= todayStr;
+        },
         { message: "Event date must be in the future" }
       ),
     })),

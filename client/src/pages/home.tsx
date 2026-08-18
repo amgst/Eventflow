@@ -41,7 +41,6 @@ export default function Home() {
   }) || [];
 
   const featuredEvents = filteredEvents.slice(0, 6);
-  const upcomingEvents = filteredEvents.slice(0, 4);
 
   return (
     <div className="min-h-screen">
@@ -87,7 +86,7 @@ export default function Home() {
                 ))}
               </SelectContent>
             </Select>
-            <Link href="/events">
+            <Link href={selectedCategory === "all" ? "/events" : `/events?category=${encodeURIComponent(selectedCategory)}`}>
               <Button size="lg" className="h-12 px-8 gap-2" data-testid="button-browse-events">
                 Browse Events
                 <ArrowRight className="h-4 w-4" />

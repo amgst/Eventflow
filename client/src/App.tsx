@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import Home from "@/pages/home";
 import EventDetail from "@/pages/event-detail";
 import CreateEvent from "@/pages/create-event";
@@ -37,9 +38,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <div className="min-h-screen bg-background">
+          <div className="min-h-screen bg-background flex flex-col">
             <Navbar />
-            <Router />
+            <main className="flex-1">
+              <Router />
+            </main>
+            <Footer />
           </div>
           <Toaster />
         </TooltipProvider>

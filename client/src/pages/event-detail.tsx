@@ -86,6 +86,31 @@ export default function EventDetail() {
     }
   };
 
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast({ title: "Link copied", description: "Event link copied to clipboard." });
+    } catch {
+      toast({ title: "Error", description: "Failed to copy link.", variant: "destructive" });
+    }
+  };
+
+  const handleInvite = async () => {
+    if (navigator.share && event) {
+      try {
+        await navigator.share({
+          title: event.title,
+          text: `Check out this event: ${event.title}`,
+          url: window.location.href,
+        });
+      } catch {
+        // user cancelled the share sheet
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -284,15 +309,17 @@ export default function EventDetail() {
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">Share this event</p>
                   <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2" onClick={handleCopyLink} data-testid="button-copy-link">
                       <Share2 className="h-4 w-4" />
                       Copy Link
                     </Button>
-                    <Button variant="outline" className="gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email
+                    <Button variant="outline" className="gap-2" asChild data-testid="button-email">
+                      <a href={`mailto:?subject=${encodeURIComponent(event.title)}&body=${encodeURIComponent(`Check out this event: ${event.title}\n${window.location.href}`)}`}>
+                        <Mail className="h-4 w-4" />
+                        Email
+                      </a>
                     </Button>
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" className="gap-2" onClick={handleInvite} data-testid="button-invite">
                       <User className="h-4 w-4" />
                       Invite
                     </Button>
